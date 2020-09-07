@@ -23,11 +23,11 @@ public class InpaintRenderer {
 
   private static final int COORDS_PER_VERTEX = 2;
   private static final int FLOAT_SIZE = 4;
+
   private static final float[] QUAD_COORDS =
           new float[]{
                   -0.6f, -0.4f, +0.6f, -0.4f, -0.6f, +0.4f, +0.6f, +0.4f
           };
-
 
   private FloatBuffer quadCoords;
   private FloatBuffer quadTexCoords;
@@ -39,18 +39,24 @@ public class InpaintRenderer {
   private int depthTextureUniform;
   private int depthTextureId = -1;
 
-  private boolean isNeedTexCoordsTransformed=true;
+  private int slice = 5;
+
+  private boolean isNeedTexCoordsTransformed = true;
 
   public void createOnGlThread(Context context, int depthTextureId) throws IOException {
-    ByteBuffer bbCoords = ByteBuffer.allocateDirect(QUAD_COORDS.length * FLOAT_SIZE);
+    // 矩形を分割
+    float[] SPLIT_QUAD_COODS = splitQuad(slice);
+
+    ByteBuffer bbCoords = ByteBuffer.allocateDirect(SPLIT_QUAD_COODS.length * FLOAT_SIZE);
     bbCoords.order(ByteOrder.nativeOrder());
     quadCoords = bbCoords.asFloatBuffer();
-    quadCoords.put(QUAD_COORDS);
+    quadCoords.put(SPLIT_QUAD_COODS);
     quadCoords.position(0);
 
-    ByteBuffer bbTexCoords = ByteBuffer.allocateDirect(QUAD_COORDS.length * FLOAT_SIZE);
+    ByteBuffer bbTexCoords = ByteBuffer.allocateDirect(SPLIT_QUAD_COODS.length * FLOAT_SIZE);
     bbTexCoords.order(ByteOrder.nativeOrder());
     quadTexCoords = bbTexCoords.asFloatBuffer();
+
 
     // load shader
     {
@@ -77,14 +83,13 @@ public class InpaintRenderer {
 
   public void draw(@NonNull Frame frame, boolean debugShowDepthMap, boolean isInpaintModeChecked) {
     if (debugShowDepthMap && isInpaintModeChecked) {
-    //frame.hasDisplayGeometryChanged()
       if (isNeedTexCoordsTransformed) {
         frame.transformCoordinates2d(
                 Coordinates2d.OPENGL_NORMALIZED_DEVICE_COORDINATES,
                 quadCoords,
                 Coordinates2d.TEXTURE_NORMALIZED,
                 quadTexCoords);
-        isNeedTexCoordsTransformed=false;
+        isNeedTexCoordsTransformed = false;
         Log.d(TAG, "draw: !!!!!!!!! is changed !!!!!!!!!");
       }
 
@@ -107,7 +112,7 @@ public class InpaintRenderer {
       GLES30.glEnableVertexAttribArray(texCoordAttrib);
 
       // draw quad
-      GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, 4);
+      GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, 4 + slice * 2);
 
       // Disable vertex arrays
       GLES30.glDisableVertexAttribArray(positionAttrib);
@@ -120,4 +125,35 @@ public class InpaintRenderer {
     }
   }
 
+  // 矩形を分割する
+  private float[] splitQuad(int slice) {
+    if (slice == 0) {
+      return QUAD_COORDS;
+    }
+
+    float[] quad_coords = QUAD_COORDS;
+    int num = 4 * slice + 8;
+    float[] splitQuadCoords = new float[num];
+
+    // 四隅の座標を求める（左下・右下・左上・右上）
+    splitQuadCoords[0] = quad_coords[0];
+    splitQuadCoords[1] = quad_coords[1];
+    splitQuadCoords[2] = quad_coords[2];
+    splitQuadCoords[3] = quad_coords[3];
+    splitQuadCoords[num - 4] = quad_coords[4];
+    splitQuadCoords[num - 3] = quad_coords[5];
+    splitQuadCoords[num - 2] = quad_coords[6];
+    splitQuadCoords[num - 1] = quad_coords[7];
+
+    // 中間の座標を求める
+    float step = (quad_coords[5] - quad_coords[1]) / (slice + 1);
+    for (int i = 1; i <= slice; i++) {
+      splitQuadCoords[4 * i] = quad_coords[0];
+      splitQuadCoords[4 * i + 1] = quad_coords[1] + i * step;
+      splitQuadCoords[4 * i + 2] = quad_coords[2];
+      splitQuadCoords[4 * i + 3] = quad_coords[3] + i * step;
+    }
+
+    return splitQuadCoords;
+  }
 }
