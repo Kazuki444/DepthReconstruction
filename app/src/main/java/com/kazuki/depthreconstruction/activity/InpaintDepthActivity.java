@@ -1,4 +1,4 @@
-package com.kazuki.depthreconstruction.main;
+package com.kazuki.depthreconstruction.activity;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -36,8 +36,8 @@ import java.io.IOException;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
-public class MainActivity extends AppCompatActivity implements GLSurfaceView.Renderer {
-  private static final String TAG = MainActivity.class.getSimpleName();
+public class InpaintDepthActivity extends AppCompatActivity implements GLSurfaceView.Renderer {
+  private static final String TAG = InpaintDepthActivity.class.getSimpleName();
 
   private GLSurfaceView surfaceView;
 
@@ -60,7 +60,7 @@ public class MainActivity extends AppCompatActivity implements GLSurfaceView.Ren
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    setContentView(R.layout.activity_main);
+    setContentView(R.layout.activity_InpaintDepth);
     surfaceView = findViewById(R.id.surfaceview);
     displayRotationHelper = new DisplayRotationHelper(this);
 

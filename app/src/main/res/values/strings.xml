@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">DepthReconstruction</string>
+    <string name="button_InpaintDepth">Inpaint Depth</string>
+    <string name="button_CastShadow">Cast Shadow</string>
 </resources>
