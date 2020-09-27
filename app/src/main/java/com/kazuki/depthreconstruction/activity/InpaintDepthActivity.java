@@ -61,7 +61,7 @@ public class InpaintDepthActivity extends AppCompatActivity implements GLSurface
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_inpaint_depth);
-    surfaceView = findViewById(R.id.surfaceview);
+    surfaceView = findViewById(R.id.surfaceview_inpaint_depth);
     displayRotationHelper = new DisplayRotationHelper(this);
 
     //Set up renderer

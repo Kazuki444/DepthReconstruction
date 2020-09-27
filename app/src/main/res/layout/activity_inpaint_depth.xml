@@ -7,7 +7,7 @@
     tools:context=".activity.InpaintDepthActivity">
 
     <android.opengl.GLSurfaceView
-        android:id="@+id/surfaceview"
+        android:id="@+id/surfaceview_inpaint_depth"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 
@@ -17,7 +17,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:layout_marginTop="16dp"
-        android:text="Show Depth Map"
+        android:text="Show Depth"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
