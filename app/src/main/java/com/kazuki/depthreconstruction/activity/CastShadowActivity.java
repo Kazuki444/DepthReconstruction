@@ -328,7 +328,8 @@ public class CastShadowActivity extends AppCompatActivity implements GLSurfaceVi
     }
   }
 
-  //
+  // Handle only one tap per frame, as taps are usually low frequency compare to frame rate.
+  
   /**
    * Swich
    */
