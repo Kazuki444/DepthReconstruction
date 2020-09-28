@@ -329,6 +329,83 @@ public class CastShadowActivity extends AppCompatActivity implements GLSurfaceVi
   }
 
   // Handle only one tap per frame, as taps are usually low frequency compare to frame rate.
+  private void handleTap(Frame frame,Camera camera){
+    MotionEvent tap =tapHelper.poll();
+    if(tap!=null&& camera.getTrackingState()==TrackingState.TRACKING){
+      for(HitResult hit : frame.hitTest(tap)){
+        // Check if any plane was hit, and if it was hit inside the plane polygoin
+        Trackable trackable=hit.getTrackable();
+        // Creates an anchor if a plane was hit
+        if((trackable instanceof Plane
+              &&((Plane)trackable).isPoseInPolygon(hit.getHitPose()))
+              &&(PlaneRenderer.calculateDistanceToPlane(hit.getHitPose(),camera.getPose())>0)){
+
+          // Hits are sorted by depth
+          if(anchors.size()>=20){
+            anchors.get(0).anchor.detach();
+            anchors.remove(0);
+          }
+
+          // Assign a color the object for rendering based on the trackable type
+          // this anchor attached to.
+          float[] objColor;
+          if(trackable instanceof Plane){
+            objColor = new float[] {139.0f, 195.0f, 74.0f, 255.0f};
+          }else{
+            objColor=DEFAULT_COLOR;
+          }
+
+          // Adding an Anchor tells ARCore that it should track this possion in space.
+          anchors.add(new ColoredAnchor(hit.createAnchor(),objColor));
+        }
+      }
+    }
+  }
+
+  /** Checks if we detected at least one plane */
+  private boolean hasTrackingPlane(){
+    for(Plane plane:session.getAllTrackables(Plane.class)){
+      if(plane.getTrackingState() == TrackingState.TRACKING){
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Returns a transformation matrix that when applied to screen space uvs makes them match
+   * correctly with the quad texture coords used to render the camera feed. It takes into account
+   * device orientation.
+   */
+  private static float[] getTextureTransformMatrix(Frame frame){
+    float[] frameTransform=new float[6];
+    float[] uvTransform=new float[9];
+    // XY pairs of coordinates in NDC space that constitute the origin and points along the two
+    // principal axes
+    float[] ndcBasis={0,0,1,0,0,1};
+
+    // Temporarily store the transformed points into outputTrandform
+    frame.transformCoordinates2d(
+            Coordinates2d.OPENGL_NORMALIZED_DEVICE_COORDINATES,
+            ndcBasis,
+            Coordinates2d.TEXTURE_NORMALIZED,
+            frameTransform);
+
+    // Convert the transformed points into an affine transform and transpose it.
+    float ndcOriginX = frameTransform[0];
+    float ndcOriginY = frameTransform[1];
+    uvTransform[0] = frameTransform[2] - ndcOriginX;
+    uvTransform[1] = frameTransform[3] - ndcOriginY;
+    uvTransform[2] = 0;
+    uvTransform[3] = frameTransform[4] - ndcOriginX;
+    uvTransform[4] = frameTransform[5] - ndcOriginY;
+    uvTransform[5] = 0;
+    uvTransform[6] = ndcOriginX;
+    uvTransform[7] = ndcOriginY;
+    uvTransform[8] = 1;
+
+    return uvTransform;
+  }
   
   /**
    * Swich
