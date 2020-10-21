@@ -1,0 +1,2 @@
+rootProject.name='DepthReconstruction'
+include ':app'
